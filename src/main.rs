@@ -69,11 +69,9 @@ fn main() -> ! {
             }
         }
         delay.delay_ms(200);
-        if is_locked {
-            if movement_sensor_pin.is_high().unwrap() {
-                movement_led_pin.set_high().unwrap();
-                buzzer.set_high().unwrap();
-            }
+        if is_locked && movement_sensor_pin.is_high().unwrap() {
+            movement_led_pin.set_high().unwrap();
+            buzzer.set_high().unwrap();
         }
         if !is_locked {
             movement_led_pin.set_low().unwrap();
