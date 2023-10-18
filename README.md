@@ -12,15 +12,6 @@ It is a basic home alarm that will detect movement
 * keypad
 * oled display
 
-It includes all of the `knurling-rs` tooling as showcased in https://github.com/knurling-rs/app-template (`defmt`, `defmt-rtt`, `panic-probe`, `flip-link`) to make development as easy as possible.
-
-`probe-run` is configured as the default runner, so you can start your program as easy as
-```sh
-cargo run --release
-```
-
-If you aren't using a debugger (or want to use cargo-embed/probe-rs-debugger), check out [alternative runners](#alternative-runners) for other options
-
 <!-- TABLE OF CONTENTS -->
 <details open="open">
   
