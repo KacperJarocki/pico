@@ -1,6 +1,16 @@
-# Project template for rp2040-hal
+# Pico Alarm
+This is a uni project it gets it starting point from https://github.com/rp-rs/rp2040-project-template
 
-This template is intended as a starting point for developing your own firmware based on the rp2040-hal.
+## What will it do
+It is a basic home alarm that will detect movement
+
+## Componets used
+
+* Raspberry pico W
+* PIR sensor 
+* Buzzer
+* keypad
+* oled display
 
 It includes all of the `knurling-rs` tooling as showcased in https://github.com/knurling-rs/app-template (`defmt`, `defmt-rtt`, `panic-probe`, `flip-link`) to make development as easy as possible.
 
@@ -247,31 +257,6 @@ Some of the options for your `runner` are listed below:
 
 </details>
 
-<!-- ROADMAP -->
-
-## Roadmap
-
-NOTE These packages are under active development. As such, it is likely to
-remain volatile until a 1.0.0 release.
-
-See the [open issues](https://github.com/rp-rs/rp2040-project-template/issues) for a list of
-proposed features (and known issues).
-
-## Contributing
-
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-The steps are:
-
-1. Fork the Project by clicking the 'Fork' button at the top of the page.
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Make some changes to the code or documentation.
-4. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-5. Push to the Feature Branch (`git push origin feature/AmazingFeature`)
-6. Create a [New Pull Request](https://github.com/rp-rs/rp-hal/pulls)
-7. An admin will review the Pull Request and discuss any changes that may be required.
-8. Once everyone is happy, the Pull Request can be merged by an admin, and your work is part of our project!
-
 ## Code of Conduct
 
 Contribution to this crate is organized under the terms of the [Rust Code of
@@ -288,10 +273,3 @@ The contents of this repository are dual-licensed under the _MIT OR Apache
 Apache-2.0 licence when you re-use this code. See `MIT` or `APACHE2.0` for more
 information on each specific licence.
 
-Any submissions to this project (e.g. as Pull Requests) must be made available
-under these terms.
-
-## Contact
-
-Raise an issue: [https://github.com/rp-rs/rp2040-project-template/issues](https://github.com/rp-rs/rp2040-project-template/issues)
-Chat to us on Matrix: [#rp-rs:matrix.org](https://matrix.to/#/#rp-rs:matrix.org)
