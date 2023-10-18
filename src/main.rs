@@ -1,45 +1,69 @@
 #![no_std]
 #![no_main]
-
-// The macro for our start-up function
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use fugit::RateExtU32;
 use panic_halt as _;
-use rp_pico::entry;
-use rp_pico::hal::pac;
-// A shorter alias for the Hardware Abstraction Layer, which provides
-// higher-level drivers.
-use rp_pico::hal;
+use pico::entry;
+use pico::hal;
+use pico::hal::gpio::FunctionI2C;
+use pico::hal::pac;
+use rp_pico as pico;
+
+use embedded_graphics::{
+    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
+    pixelcolor::BinaryColor,
+    prelude::*,
+    text::Text,
+};
+
+use sh1106::{prelude::*, Builder};
+
 #[entry]
 fn main() -> ! {
-    // Grab our singleton objects
     let mut pac = pac::Peripherals::take().unwrap();
-
-    // Note - we don't do any clock set-up in this example. The RP2040 will run
-    // at it's default clock speed.
-
-    // The single-cycle I/O block controls our GPIO pins
     let sio = hal::Sio::new(pac.SIO);
+    let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
 
-    // Set the pins up according to their function on this particular board
+    let clocks = hal::clocks::init_clocks_and_plls(
+        pico::XOSC_CRYSTAL_FREQ,
+        pac.XOSC,
+        pac.CLOCKS,
+        pac.PLL_SYS,
+        pac.PLL_USB,
+        &mut pac.RESETS,
+        &mut watchdog,
+    )
+    .ok()
+    .unwrap();
     let pins = rp_pico::Pins::new(
         pac.IO_BANK0,
         pac.PADS_BANK0,
         sio.gpio_bank0,
         &mut pac.RESETS,
     );
+    let sda_pin = pins.gpio16.into_function::<FunctionI2C>();
+    let scl_pin = pins.gpio17.into_function::<FunctionI2C>();
 
-    // Our LED output
-    let mut led_pin = pins.gpio0.into_push_pull_output();
+    let i2c = hal::I2C::i2c0(
+        pac.I2C0,
+        sda_pin,
+        scl_pin,
+        400.kHz(),
+        &mut pac.RESETS,
+        &clocks.peripheral_clock,
+    );
+    let text_style = MonoTextStyleBuilder::new()
+        .font(&FONT_6X10)
+        .text_color(BinaryColor::On)
+        .build();
 
-    // Our button input
-    let button_pin = pins.gpio15.into_pull_up_input();
+    let mut display: GraphicsMode<_> = Builder::new().connect_i2c(i2c).into();
 
-    // Run forever, setting the LED according to the button
-    loop {
-        if button_pin.is_low().unwrap() {
-            led_pin.set_high().unwrap();
-        } else {
-            led_pin.set_low().unwrap();
-        }
-    }
+    display.init().unwrap();
+    display.flush().unwrap();
+
+    Text::new("Hello", Point::zero(), text_style)
+        .draw(&mut display)
+        .unwrap();
+
+    loop {}
 }
