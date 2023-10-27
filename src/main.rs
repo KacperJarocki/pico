@@ -12,7 +12,7 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 use embedded_hal::digital::v2::{InputPin, OutputPin};
-use fugit::{ExtU32, RateExtU32};
+use fugit::RateExtU32;
 use panic_halt as _;
 use rp_pico::entry;
 use rp_pico::hal;
@@ -194,6 +194,17 @@ fn main() -> ! {
         )
         .draw(&mut display)
         .unwrap();
+        if code.ptr > 4 {
+            Text::with_baseline(
+                "wystarczajaca dlugosc",
+                Point::new(1, 40),
+                text_style_mess,
+                Baseline::Top,
+            )
+            .draw(&mut display)
+            .unwrap();
+        }
+
         display.flush().unwrap();
 
         delay.delay_ms(100);
