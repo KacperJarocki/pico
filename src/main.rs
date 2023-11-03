@@ -11,13 +11,16 @@ use embedded_graphics::{
     prelude::*,
     text::{Baseline, Text},
 };
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::{
+    digital::v2::{InputPin, OutputPin},
+    prelude::_embedded_hal_blocking_delay_DelayMs,
+};
 use fugit::RateExtU32;
 use panic_halt as _;
-use rp_pico::entry;
 use rp_pico::hal;
 use rp_pico::hal::pac;
 use rp_pico::hal::Clock;
+use rp_pico::{entry, hal::gpio::Error};
 
 use ssd1306::{prelude::*, Ssd1306};
 #[entry]
@@ -108,79 +111,27 @@ fn main() -> ! {
 
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
+    display.init().unwrap();
+
     loop {
-        display.init().unwrap();
+        let mut key_pressed = "";
         display.clear(BinaryColor::Off).unwrap();
-        row_1_pin.set_high().unwrap();
-        delay.delay_ms(20);
-        if col_1_pin.is_high().unwrap() {
-            code.write_str("1").unwrap();
+        key_pressed = keyboard(
+            &mut row_1_pin,
+            &mut row_2_pin,
+            &mut row_3_pin,
+            &mut row_4_pin,
+            &col_1_pin,
+            &col_2_pin,
+            &col_3_pin,
+            &col_4_pin,
+            &mut delay,
+        );
+        code.write_str(key_pressed).unwrap();
+        if key_pressed == "#" {
             mess.reset();
-            mess.write_str("Wiadomosc kod za krotki").unwrap();
+            mess.write_str("Kod zatwierdzony").unwrap();
         }
-        if col_2_pin.is_high().unwrap() {
-            code.write_str("2").unwrap();
-        }
-
-        if col_3_pin.is_high().unwrap() {
-            code.write_str("3").unwrap();
-        }
-        if col_4_pin.is_high().unwrap() {
-            code.write_str("A").unwrap();
-        }
-        row_1_pin.set_low().unwrap();
-        row_2_pin.set_high().unwrap();
-        delay.delay_ms(20);
-        if col_1_pin.is_high().unwrap() {
-            code.write_str("4").unwrap();
-        }
-        if col_2_pin.is_high().unwrap() {
-            code.write_str("5").unwrap();
-        }
-
-        if col_3_pin.is_high().unwrap() {
-            code.write_str("6").unwrap();
-        }
-        if col_4_pin.is_high().unwrap() {
-            code.write_str("B").unwrap();
-        }
-        row_2_pin.set_low().unwrap();
-
-        row_3_pin.set_high().unwrap();
-        delay.delay_ms(20);
-        if col_1_pin.is_high().unwrap() {
-            code.write_str("7").unwrap();
-        }
-        if col_2_pin.is_high().unwrap() {
-            code.write_str("8").unwrap();
-        }
-
-        if col_3_pin.is_high().unwrap() {
-            code.write_str("9").unwrap();
-        }
-        if col_4_pin.is_high().unwrap() {
-            code.write_str("C").unwrap();
-        }
-        row_3_pin.set_low().unwrap();
-
-        row_4_pin.set_high().unwrap();
-        delay.delay_ms(20);
-        if col_1_pin.is_high().unwrap() {
-            code.write_str("*").unwrap();
-        }
-        if col_2_pin.is_high().unwrap() {
-            code.write_str("0").unwrap();
-        }
-
-        if col_3_pin.is_high().unwrap() {
-            code.write_str("#").unwrap();
-            mess.reset();
-            mess.write_str("kod zatwierdzony").unwrap();
-        }
-        if col_4_pin.is_high().unwrap() {
-            code.write_str("D").unwrap();
-        }
-        row_4_pin.set_low().unwrap();
 
         Text::with_baseline(code.as_str(), Point::zero(), text_style_code, Baseline::Top)
             .draw(&mut display)
@@ -232,6 +183,84 @@ fn main() -> ! {
         }
         delay.delay_ms(20);
     }
+}
+fn keyboard<'a>(
+    row_1_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_2_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_3_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_4_pin: &'a mut dyn OutputPin<Error = Error>,
+    col_1_pin: &'a dyn InputPin<Error = Error>,
+    col_2_pin: &'a dyn InputPin<Error = Error>,
+    col_3_pin: &'a dyn InputPin<Error = Error>,
+    col_4_pin: &'a dyn InputPin<Error = Error>,
+    delay: &'a mut dyn _embedded_hal_blocking_delay_DelayMs<u16>,
+) -> &'a str {
+    row_1_pin.set_high().unwrap();
+    delay.delay_ms(20);
+    let mut key = "";
+    if col_1_pin.is_high().unwrap() {
+        key = "1";
+    }
+    if col_2_pin.is_high().unwrap() {
+        key = "2";
+    }
+    if col_3_pin.is_high().unwrap() {
+        key = "3";
+    }
+    if col_4_pin.is_high().unwrap() {
+        key = "A";
+    }
+    row_1_pin.set_low().unwrap();
+    row_2_pin.set_high().unwrap();
+    delay.delay_ms(20);
+    if col_1_pin.is_high().unwrap() {
+        key = "4";
+    }
+    if col_2_pin.is_high().unwrap() {
+        key = "5";
+    }
+
+    if col_3_pin.is_high().unwrap() {
+        key = "6";
+    }
+    if col_4_pin.is_high().unwrap() {
+        key = "B";
+    }
+    row_2_pin.set_low().unwrap();
+
+    row_3_pin.set_high().unwrap();
+    delay.delay_ms(20);
+    if col_1_pin.is_high().unwrap() {
+        key = "7";
+    }
+    if col_2_pin.is_high().unwrap() {
+        key = "8";
+    }
+
+    if col_3_pin.is_high().unwrap() {
+        key = "9";
+    }
+    if col_4_pin.is_high().unwrap() {
+        key = "C";
+    }
+    row_3_pin.set_low().unwrap();
+    row_4_pin.set_high().unwrap();
+    delay.delay_ms(20);
+    if col_1_pin.is_high().unwrap() {
+        key = "*";
+    }
+    if col_2_pin.is_high().unwrap() {
+        key = "0";
+    }
+
+    if col_3_pin.is_high().unwrap() {
+        key = "#";
+    }
+    if col_4_pin.is_high().unwrap() {
+        key = "D";
+    }
+    row_4_pin.set_low().unwrap();
+    key
 }
 
 struct FmtBuf {
