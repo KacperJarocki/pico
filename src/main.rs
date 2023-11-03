@@ -91,7 +91,6 @@ fn main() -> ! {
     let mut led_pin_unlocked = pins
         .gpio27
         .into_push_pull_output_in_state(hal::gpio::PinState::High);
-    let button_pin = pins.gpio22.into_pull_up_input();
     let movement_sensor_pin = pins.gpio15.into_pull_down_input();
     let mut movement_led_pin = pins
         .gpio21
@@ -113,10 +112,12 @@ fn main() -> ! {
         .into_buffered_graphics_mode();
     display.init().unwrap();
 
+    let mut code_accepted = false;
+
     loop {
-        let mut key_pressed = "";
+        let mut _key_pressed = "";
         display.clear(BinaryColor::Off).unwrap();
-        key_pressed = keyboard(
+        _key_pressed = keyboard(
             &mut row_1_pin,
             &mut row_2_pin,
             &mut row_3_pin,
@@ -127,10 +128,21 @@ fn main() -> ! {
             &col_4_pin,
             &mut delay,
         );
-        code.write_str(key_pressed).unwrap();
-        if key_pressed == "#" {
+
+        if _key_pressed == "#" && code_accepted == true {
+            is_locked = true;
             mess.reset();
-            mess.write_str("Kod zatwierdzony").unwrap();
+            mess.write_str("alarm uzbrojono").unwrap();
+        } else if _key_pressed == "*" {
+            is_locked = false;
+            code_accepted = false;
+        } else if _key_pressed == "#" {
+            code_accepted = true;
+            mess.reset();
+            mess.write_str("Kod zatwierdzony,\n Wcisnij ponownie # aby uzbroic {}")
+                .unwrap();
+        } else {
+            code.write_str(_key_pressed).unwrap();
         }
 
         Text::with_baseline(code.as_str(), Point::zero(), text_style_code, Baseline::Top)
@@ -159,20 +171,17 @@ fn main() -> ! {
         display.flush().unwrap();
 
         delay.delay_ms(100);
-        if button_pin.is_low().unwrap() {
-            match is_locked {
-                true => {
-                    is_locked = false;
-                    led_pin_locked.set_low().unwrap();
-                    led_pin_unlocked.set_high().unwrap();
-                }
-                false => {
-                    is_locked = true;
-                    led_pin_unlocked.set_low().unwrap();
-                    led_pin_locked.set_high().unwrap();
-                }
+        match is_locked {
+            false => {
+                led_pin_locked.set_low().unwrap();
+                led_pin_unlocked.set_high().unwrap();
+            }
+            true => {
+                led_pin_unlocked.set_low().unwrap();
+                led_pin_locked.set_high().unwrap();
             }
         }
+
         if is_locked && movement_sensor_pin.is_high().unwrap() {
             movement_led_pin.set_high().unwrap();
             buzzer.set_high().unwrap();
