@@ -112,76 +112,55 @@ fn main() -> ! {
         .into_buffered_graphics_mode();
     display.init().unwrap();
 
-    let mut code_accepted = false;
-
     loop {
-        let mut _key_pressed = "";
         display.clear(BinaryColor::Off).unwrap();
-        _key_pressed = keyboard(
-            &mut row_1_pin,
-            &mut row_2_pin,
-            &mut row_3_pin,
-            &mut row_4_pin,
-            &col_1_pin,
-            &col_2_pin,
-            &col_3_pin,
-            &col_4_pin,
-            &mut delay,
-        );
+        match is_locked {
+            false => {
+                led_pin_locked.set_low().unwrap();
+                led_pin_unlocked.set_high().unwrap();
+                get_alarm_locked(
+                    &mut row_1_pin,
+                    &mut row_2_pin,
+                    &mut row_3_pin,
+                    &mut row_4_pin,
+                    &col_1_pin,
+                    &col_2_pin,
+                    &col_3_pin,
+                    &col_4_pin,
+                    &mut delay,
+                    &mut code,
+                    &mut mess,
+                    &mut is_locked,
+                );
+                Text::with_baseline(code.as_str(), Point::zero(), text_style_code, Baseline::Top)
+                    .draw(&mut display)
+                    .unwrap();
 
-        if _key_pressed == "#" && code_accepted == true {
-            is_locked = true;
-            mess.reset();
-            mess.write_str("alarm uzbrojono").unwrap();
-        } else if _key_pressed == "*" {
-            is_locked = false;
-            code_accepted = false;
-        } else if _key_pressed == "#" {
-            code_accepted = true;
-            mess.reset();
-            mess.write_str("Kod zatwierdzony,\n Wcisnij ponownie\n # aby uzbroic")
-                .unwrap();
-        } else {
-            code.write_str(_key_pressed).unwrap();
-        }
-
-        if !is_locked {
-            Text::with_baseline(code.as_str(), Point::zero(), text_style_code, Baseline::Top)
-                .draw(&mut display)
-                .unwrap();
-
-            Text::with_baseline(
-                mess.as_str(),
-                Point::new(1, 20),
-                text_style_mess,
-                Baseline::Top,
-            )
-            .draw(&mut display)
-            .unwrap();
-            if code.ptr > 4 {
                 Text::with_baseline(
-                    "wystarczajaca dlugosc",
-                    Point::new(1, 50),
+                    mess.as_str(),
+                    Point::new(1, 20),
                     text_style_mess,
                     Baseline::Top,
                 )
                 .draw(&mut display)
                 .unwrap();
-            }
-        }
-        display.flush().unwrap();
-
-        delay.delay_ms(100);
-        match is_locked {
-            false => {
-                led_pin_locked.set_low().unwrap();
-                led_pin_unlocked.set_high().unwrap();
+                if code.ptr > 4 {
+                    Text::with_baseline(
+                        "wystarczajaca dlugosc",
+                        Point::new(1, 50),
+                        text_style_mess,
+                        Baseline::Top,
+                    )
+                    .draw(&mut display)
+                    .unwrap();
+                }
             }
             true => {
                 led_pin_unlocked.set_low().unwrap();
                 led_pin_locked.set_high().unwrap();
             }
         }
+        display.flush().unwrap();
 
         if is_locked && movement_sensor_pin.is_high().unwrap() {
             movement_led_pin.set_high().unwrap();
@@ -194,7 +173,79 @@ fn main() -> ! {
         delay.delay_ms(20);
     }
 }
-fn keyboard<'a>(
+fn get_alarm_locked<'a>(
+    row_1_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_2_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_3_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_4_pin: &'a mut dyn OutputPin<Error = Error>,
+    col_1_pin: &'a dyn InputPin<Error = Error>,
+    col_2_pin: &'a dyn InputPin<Error = Error>,
+    col_3_pin: &'a dyn InputPin<Error = Error>,
+    col_4_pin: &'a dyn InputPin<Error = Error>,
+    delay: &'a mut dyn _embedded_hal_blocking_delay_DelayMs<u16>,
+    code: &mut FmtBuf,
+    mess: &mut FmtBuf,
+    is_locked: &mut bool,
+) {
+    let how_to_handle_code = get_code_from_keyboard(
+        row_1_pin, row_2_pin, row_3_pin, row_4_pin, col_1_pin, col_2_pin, col_3_pin, col_4_pin,
+        delay, code,
+    );
+    match how_to_handle_code {
+        0 => {
+            *is_locked = true;
+            mess.reset();
+            mess.write_str("alarm uzbrojono").unwrap();
+        }
+        1 => {
+            mess.reset();
+            mess.write_str("Wpisz nowy kod\nnastepnie zatwierdz #")
+                .unwrap();
+        }
+        2 => {
+            mess.reset();
+            mess.write_str("Wpisuj dalej kod\naby poprawic wcisnij *")
+                .unwrap();
+        }
+        3 => {
+            mess.reset();
+            mess.write_str("Kod ma wystarczającą dlugosc\naby poprawic wcisnij *")
+                .unwrap();
+        }
+        _ => {}
+    }
+}
+fn get_code_from_keyboard<'a>(
+    row_1_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_2_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_3_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_4_pin: &'a mut dyn OutputPin<Error = Error>,
+    col_1_pin: &'a dyn InputPin<Error = Error>,
+    col_2_pin: &'a dyn InputPin<Error = Error>,
+    col_3_pin: &'a dyn InputPin<Error = Error>,
+    col_4_pin: &'a dyn InputPin<Error = Error>,
+    delay: &'a mut dyn _embedded_hal_blocking_delay_DelayMs<u16>,
+    code: &mut FmtBuf,
+) -> u32 {
+    let _key_pressed = get_key_pressed_on_keyboard(
+        row_1_pin, row_2_pin, row_3_pin, row_4_pin, col_1_pin, col_2_pin, col_3_pin, col_4_pin,
+        delay,
+    );
+    let is_code_proper = code.ptr > 4 && code.ptr < 9;
+    if _key_pressed == "#" && is_code_proper {
+        return 0;
+    } else if _key_pressed == "*" {
+        code.reset();
+        return 1;
+    } else if !is_code_proper {
+        code.write_str(_key_pressed).unwrap();
+        return 2;
+    } else {
+        code.write_str(_key_pressed).unwrap();
+        return 3;
+    }
+}
+fn get_key_pressed_on_keyboard<'a>(
     row_1_pin: &'a mut dyn OutputPin<Error = Error>,
     row_2_pin: &'a mut dyn OutputPin<Error = Error>,
     row_3_pin: &'a mut dyn OutputPin<Error = Error>,
