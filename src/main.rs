@@ -139,35 +139,36 @@ fn main() -> ! {
         } else if _key_pressed == "#" {
             code_accepted = true;
             mess.reset();
-            mess.write_str("Kod zatwierdzony,\n Wcisnij ponownie # aby uzbroic {}")
+            mess.write_str("Kod zatwierdzony,\n Wcisnij ponownie\n # aby uzbroic")
                 .unwrap();
         } else {
             code.write_str(_key_pressed).unwrap();
         }
 
-        Text::with_baseline(code.as_str(), Point::zero(), text_style_code, Baseline::Top)
-            .draw(&mut display)
-            .unwrap();
+        if !is_locked {
+            Text::with_baseline(code.as_str(), Point::zero(), text_style_code, Baseline::Top)
+                .draw(&mut display)
+                .unwrap();
 
-        Text::with_baseline(
-            mess.as_str(),
-            Point::new(1, 20),
-            text_style_mess,
-            Baseline::Top,
-        )
-        .draw(&mut display)
-        .unwrap();
-        if code.ptr > 4 {
             Text::with_baseline(
-                "wystarczajaca dlugosc",
-                Point::new(1, 40),
+                mess.as_str(),
+                Point::new(1, 20),
                 text_style_mess,
                 Baseline::Top,
             )
             .draw(&mut display)
             .unwrap();
+            if code.ptr > 4 {
+                Text::with_baseline(
+                    "wystarczajaca dlugosc",
+                    Point::new(1, 50),
+                    text_style_mess,
+                    Baseline::Top,
+                )
+                .draw(&mut display)
+                .unwrap();
+            }
         }
-
         display.flush().unwrap();
 
         delay.delay_ms(100);
