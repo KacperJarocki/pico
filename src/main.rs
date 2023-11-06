@@ -117,6 +117,7 @@ fn main() -> ! {
         display.clear(BinaryColor::Off).unwrap();
         match is_locked {
             false => {
+                delay.delay_ms(30);
                 led_pin_locked.set_low().unwrap();
                 led_pin_unlocked.set_high().unwrap();
                 get_alarm_locked(
@@ -147,6 +148,7 @@ fn main() -> ! {
                 .unwrap();
             }
             true => {
+                delay.delay_ms(30);
                 led_pin_unlocked.set_low().unwrap();
                 led_pin_locked.set_high().unwrap();
                 get_alarm_unlocked(
@@ -160,7 +162,7 @@ fn main() -> ! {
                     &col_4_pin,
                     &mut delay,
                     &mut unlocking,
-                    &code,
+                    &mut code,
                     &mut mess,
                     &mut is_locked,
                 );
@@ -207,7 +209,7 @@ fn get_alarm_unlocked<'a>(
     col_4_pin: &'a dyn InputPin<Error = Error>,
     delay: &'a mut dyn _embedded_hal_blocking_delay_DelayMs<u16>,
     unlocking: &mut FmtBuf,
-    code: &FmtBuf,
+    code: &mut FmtBuf,
     mess: &mut FmtBuf,
     is_locked: &mut bool,
 ) {
@@ -218,8 +220,9 @@ fn get_alarm_unlocked<'a>(
     match how_to_handle_code {
         0 => {
             if code.is_equal(&unlocking) {
-                *is_locked = false;
                 unlocking.reset();
+                code.reset();
+                *is_locked = false;
             } else {
                 mess.reset();
                 unlocking.reset();
@@ -280,7 +283,7 @@ fn get_alarm_locked<'a>(
         }
         3 => {
             mess.reset();
-            mess.write_str("Kod ma wystarczającą dlugosc\naby poprawic wcisnij *")
+            mess.write_str("Kod ma wystarczajaca\ndlugosc aby poprawic\nwcisnij *")
                 .unwrap();
         }
         _ => {}
@@ -305,6 +308,8 @@ fn get_code_from_keyboard<'a>(
     let is_code_proper = code.ptr > 4 && code.ptr < 9;
     if _key_pressed == "#" && is_code_proper {
         return 0;
+    } else if _key_pressed == "#" {
+        return 9;
     } else if _key_pressed == "*" {
         code.reset();
         return 1;
