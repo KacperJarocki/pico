@@ -107,6 +107,7 @@ fn main() -> ! {
         .build();
     let mut code = FmtBuf::new();
     let mut mess = FmtBuf::new();
+    let mut unlocking = FmtBuf::new();
 
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
@@ -144,20 +145,42 @@ fn main() -> ! {
                 )
                 .draw(&mut display)
                 .unwrap();
-                if code.ptr > 4 {
-                    Text::with_baseline(
-                        "wystarczajaca dlugosc",
-                        Point::new(1, 50),
-                        text_style_mess,
-                        Baseline::Top,
-                    )
-                    .draw(&mut display)
-                    .unwrap();
-                }
             }
             true => {
                 led_pin_unlocked.set_low().unwrap();
                 led_pin_locked.set_high().unwrap();
+                get_alarm_unlocked(
+                    &mut row_1_pin,
+                    &mut row_2_pin,
+                    &mut row_3_pin,
+                    &mut row_4_pin,
+                    &col_1_pin,
+                    &col_2_pin,
+                    &col_3_pin,
+                    &col_4_pin,
+                    &mut delay,
+                    &mut unlocking,
+                    &code,
+                    &mut mess,
+                    &mut is_locked,
+                );
+                Text::with_baseline(
+                    unlocking.as_str(),
+                    Point::zero(),
+                    text_style_code,
+                    Baseline::Top,
+                )
+                .draw(&mut display)
+                .unwrap();
+
+                Text::with_baseline(
+                    mess.as_str(),
+                    Point::new(1, 20),
+                    text_style_mess,
+                    Baseline::Top,
+                )
+                .draw(&mut display)
+                .unwrap();
             }
         }
         display.flush().unwrap();
@@ -171,6 +194,54 @@ fn main() -> ! {
             buzzer.set_low().unwrap();
         }
         delay.delay_ms(20);
+    }
+}
+fn get_alarm_unlocked<'a>(
+    row_1_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_2_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_3_pin: &'a mut dyn OutputPin<Error = Error>,
+    row_4_pin: &'a mut dyn OutputPin<Error = Error>,
+    col_1_pin: &'a dyn InputPin<Error = Error>,
+    col_2_pin: &'a dyn InputPin<Error = Error>,
+    col_3_pin: &'a dyn InputPin<Error = Error>,
+    col_4_pin: &'a dyn InputPin<Error = Error>,
+    delay: &'a mut dyn _embedded_hal_blocking_delay_DelayMs<u16>,
+    unlocking: &mut FmtBuf,
+    code: &FmtBuf,
+    mess: &mut FmtBuf,
+    is_locked: &mut bool,
+) {
+    let how_to_handle_code = get_code_from_keyboard(
+        row_1_pin, row_2_pin, row_3_pin, row_4_pin, col_1_pin, col_2_pin, col_3_pin, col_4_pin,
+        delay, unlocking,
+    );
+    match how_to_handle_code {
+        0 => {
+            if code.is_equal(&unlocking) {
+                *is_locked = false;
+                unlocking.reset();
+            } else {
+                mess.reset();
+                unlocking.reset();
+                mess.write_str("kod nieprawidlowy").unwrap();
+            }
+        }
+        1 => {
+            mess.reset();
+            mess.write_str("Wpisz nowy kod\nnastepnie zatwierdz #")
+                .unwrap();
+        }
+        2 => {
+            mess.reset();
+            mess.write_str("Wpisuj dalej kod\naby poprawic wcisnij *")
+                .unwrap();
+        }
+        3 => {
+            mess.reset();
+            mess.write_str("Wpisuj dalej kod\naby poprawic wcisnij *")
+                .unwrap();
+        }
+        _ => {}
     }
 }
 fn get_alarm_locked<'a>(
@@ -343,6 +414,18 @@ impl FmtBuf {
 
     fn as_str(&self) -> &str {
         core::str::from_utf8(&self.buf[0..self.ptr]).unwrap()
+    }
+    fn is_equal(&self, s: &FmtBuf) -> bool {
+        if self.ptr != s.ptr {
+            false
+        } else {
+            for n in 0..self.ptr {
+                if self.buf[n] != s.buf[n] {
+                    return false;
+                }
+            }
+            true
+        }
     }
 }
 
