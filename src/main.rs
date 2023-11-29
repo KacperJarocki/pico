@@ -230,29 +230,24 @@ fn get_alarm_unlocked<'a>(
     match how_to_handle_code {
         0 => {
             if code.is_equal(&unlocking) {
+                mess.reset();
                 unlocking.reset();
                 code.reset();
                 *is_locked = false;
+                mess.write_str("Alarm rozbrojony").unwrap();
             } else {
                 mess.reset();
                 unlocking.reset();
                 mess.write_str("kod nieprawidlowy").unwrap();
             }
         }
-        1 => {
+        8 => {
             mess.reset();
-            mess.write_str("Wpisz nowy kod\nnastepnie zatwierdz #")
-                .unwrap();
+            mess.write_str("kod nieprawidlowy").unwrap();
         }
-        2 => {
+        9 => {
             mess.reset();
-            mess.write_str("Wpisuj dalej kod\naby poprawic wcisnij *")
-                .unwrap();
-        }
-        3 => {
-            mess.reset();
-            mess.write_str("Wpisuj dalej kod\naby poprawic wcisnij *")
-                .unwrap();
+            mess.write_str("kod nieprawidlowy").unwrap();
         }
         _ => {}
     }
@@ -286,16 +281,19 @@ fn get_alarm_locked<'a>(
             mess.write_str("Wpisz nowy kod\nnastepnie zatwierdz #")
                 .unwrap();
         }
-        2 => {
-            mess.reset();
-            mess.write_str("Wpisuj dalej kod\naby poprawic wcisnij *")
-                .unwrap();
-        }
         3 => {
             mess.reset();
-            mess.write_str("Kod ma wystarczajaca\ndlugosc aby poprawic\nwcisnij *")
-                .unwrap();
+            mess.write_str("Kod jest prawidlowy").unwrap();
         }
+        8 => {
+            mess.reset();
+            mess.write_str("Kod za dlugi, 8 znaki max").unwrap();
+        }
+        9 => {
+            mess.reset();
+            mess.write_str("Kod za krotki, 4 znaki min").unwrap();
+        }
+
         _ => {}
     }
 }
