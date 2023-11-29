@@ -4,7 +4,7 @@
 use core::fmt::Write;
 use embedded_graphics::{
     mono_font::{
-        ascii::{FONT_5X8, FONT_9X18_BOLD},
+        ascii::{FONT_5X7, FONT_9X18_BOLD},
         MonoTextStyleBuilder,
     },
     pixelcolor::BinaryColor,
@@ -102,7 +102,7 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
     let text_style_mess = MonoTextStyleBuilder::new()
-        .font(&FONT_5X8)
+        .font(&FONT_5X7)
         .text_color(BinaryColor::On)
         .build();
     let mut code = FmtBuf::new();
@@ -115,6 +115,16 @@ fn main() -> ! {
 
     loop {
         display.clear(BinaryColor::Off).unwrap();
+
+        Text::with_baseline(
+            "Popraw kod wciskajac *\nZatwierdz kod wciskajac #",
+            Point::new(1, 50),
+            text_style_mess,
+            Baseline::Top,
+        )
+        .draw(&mut display)
+        .unwrap();
+
         match is_locked {
             false => {
                 delay.delay_ms(30);
@@ -305,7 +315,9 @@ fn get_code_from_keyboard<'a>(
         row_1_pin, row_2_pin, row_3_pin, row_4_pin, col_1_pin, col_2_pin, col_3_pin, col_4_pin,
         delay,
     );
-    let is_code_proper = code.ptr > 4 && code.ptr < 9;
+    let is_code_too_short = code.ptr < 4;
+    let is_code_too_long = code.ptr > 8;
+    let is_code_proper = !is_code_too_long && !is_code_too_short;
     if _key_pressed == "#" && is_code_proper {
         return 0;
     } else if _key_pressed == "#" {
