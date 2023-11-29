@@ -320,7 +320,9 @@ fn get_code_from_keyboard<'a>(
     let is_code_proper = !is_code_too_long && !is_code_too_short;
     if _key_pressed == "#" && is_code_proper {
         return 0;
-    } else if _key_pressed == "#" {
+    } else if _key_pressed == "#" && is_code_too_long {
+        return 8;
+    } else if _key_pressed == "#" && is_code_too_short {
         return 9;
     } else if _key_pressed == "*" {
         code.reset();
