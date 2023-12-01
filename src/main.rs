@@ -4,7 +4,7 @@
 use core::fmt::Write;
 use embedded_graphics::{
     mono_font::{
-        ascii::{FONT_5X8, FONT_9X18_BOLD},
+        ascii::{FONT_5X7, FONT_9X18_BOLD},
         MonoTextStyleBuilder,
     },
     pixelcolor::BinaryColor,
@@ -102,7 +102,7 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
     let text_style_mess = MonoTextStyleBuilder::new()
-        .font(&FONT_5X8)
+        .font(&FONT_5X7)
         .text_color(BinaryColor::On)
         .build();
     let mut code = FmtBuf::new();
@@ -115,6 +115,16 @@ fn main() -> ! {
 
     loop {
         display.clear(BinaryColor::Off).unwrap();
+
+        Text::with_baseline(
+            "Popraw kod wciskajac *\nZatwierdz kod wciskajac #",
+            Point::new(1, 50),
+            text_style_mess,
+            Baseline::Top,
+        )
+        .draw(&mut display)
+        .unwrap();
+
         match is_locked {
             false => {
                 delay.delay_ms(30);
@@ -220,29 +230,24 @@ fn get_alarm_unlocked<'a>(
     match how_to_handle_code {
         0 => {
             if code.is_equal(&unlocking) {
+                mess.reset();
                 unlocking.reset();
                 code.reset();
                 *is_locked = false;
+                mess.write_str("Alarm rozbrojony").unwrap();
             } else {
                 mess.reset();
                 unlocking.reset();
                 mess.write_str("kod nieprawidlowy").unwrap();
             }
         }
-        1 => {
+        8 => {
             mess.reset();
-            mess.write_str("Wpisz nowy kod\nnastepnie zatwierdz #")
-                .unwrap();
+            mess.write_str("kod nieprawidlowy").unwrap();
         }
-        2 => {
+        9 => {
             mess.reset();
-            mess.write_str("Wpisuj dalej kod\naby poprawic wcisnij *")
-                .unwrap();
-        }
-        3 => {
-            mess.reset();
-            mess.write_str("Wpisuj dalej kod\naby poprawic wcisnij *")
-                .unwrap();
+            mess.write_str("kod nieprawidlowy").unwrap();
         }
         _ => {}
     }
@@ -276,16 +281,19 @@ fn get_alarm_locked<'a>(
             mess.write_str("Wpisz nowy kod\nnastepnie zatwierdz #")
                 .unwrap();
         }
-        2 => {
-            mess.reset();
-            mess.write_str("Wpisuj dalej kod\naby poprawic wcisnij *")
-                .unwrap();
-        }
         3 => {
             mess.reset();
-            mess.write_str("Kod ma wystarczajaca\ndlugosc aby poprawic\nwcisnij *")
-                .unwrap();
+            mess.write_str("Kod jest prawidlowy").unwrap();
         }
+        8 => {
+            mess.reset();
+            mess.write_str("Kod za dlugi, 8 znaki max").unwrap();
+        }
+        9 => {
+            mess.reset();
+            mess.write_str("Kod za krotki, 4 znaki min").unwrap();
+        }
+
         _ => {}
     }
 }
@@ -305,10 +313,14 @@ fn get_code_from_keyboard<'a>(
         row_1_pin, row_2_pin, row_3_pin, row_4_pin, col_1_pin, col_2_pin, col_3_pin, col_4_pin,
         delay,
     );
-    let is_code_proper = code.ptr > 4 && code.ptr < 9;
+    let is_code_too_short = code.ptr < 4;
+    let is_code_too_long = code.ptr > 8;
+    let is_code_proper = !is_code_too_long && !is_code_too_short;
     if _key_pressed == "#" && is_code_proper {
         return 0;
-    } else if _key_pressed == "#" {
+    } else if _key_pressed == "#" && is_code_too_long {
+        return 8;
+    } else if _key_pressed == "#" && is_code_too_short {
         return 9;
     } else if _key_pressed == "*" {
         code.reset();
