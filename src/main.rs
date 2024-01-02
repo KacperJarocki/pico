@@ -4,7 +4,7 @@
 use core::fmt::Write;
 use embedded_graphics::{
     mono_font::{
-        ascii::{FONT_5X7, FONT_9X18_BOLD},
+        ascii::{FONT_6X13, FONT_9X18_BOLD},
         MonoTextStyleBuilder,
     },
     pixelcolor::BinaryColor,
@@ -102,7 +102,7 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
     let text_style_mess = MonoTextStyleBuilder::new()
-        .font(&FONT_5X7)
+        .font(&FONT_6X13)
         .text_color(BinaryColor::On)
         .build();
     let mut code = FmtBuf::new();
@@ -117,8 +117,8 @@ fn main() -> ! {
         display.clear(BinaryColor::Off).unwrap();
 
         Text::with_baseline(
-            "Popraw kod wciskajac *\nZatwierdz kod wciskajac #",
-            Point::new(1, 50),
+            "Popraw kod - *\nZatwierdz kod - #",
+            Point::new(1, 40),
             text_style_mess,
             Baseline::Top,
         )
@@ -187,7 +187,7 @@ fn main() -> ! {
 
                 Text::with_baseline(
                     mess.as_str(),
-                    Point::new(1, 20),
+                    Point::new(1, 18),
                     text_style_mess,
                     Baseline::Top,
                 )
@@ -278,8 +278,7 @@ fn get_alarm_locked<'a>(
         }
         1 => {
             mess.reset();
-            mess.write_str("Wpisz nowy kod\nnastepnie zatwierdz #")
-                .unwrap();
+            mess.write_str("Wpisz nowy kod").unwrap();
         }
         3 => {
             mess.reset();
