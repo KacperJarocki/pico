@@ -1,8 +1,6 @@
 # Pico Alarm
-This is a uni project it gets it starting point from https://github.com/rp-rs/rp2040-project-template
-
-## What will it do
-It is a basic home alarm that will detect movement
+## What it does
+It is a basic home alarm that detects movement
 
 ## Componets used
 
@@ -257,10 +255,4 @@ to intervene to uphold that code of conduct.
 [CoC]: CODE_OF_CONDUCT.md
 [rp-rs team]: https://github.com/orgs/rp-rs/teams/rp-rs
 
-## License
-
-The contents of this repository are dual-licensed under the _MIT OR Apache
-2.0_ License. That means you can chose either the MIT licence or the
-Apache-2.0 licence when you re-use this code. See `MIT` or `APACHE2.0` for more
-information on each specific licence.
 
